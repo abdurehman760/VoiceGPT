@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice GPT Frontend</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Voice GPT Frontend</h1>
+  <audio id="audioOutput" autoplay></audio>
+  <div class="chat-card">
+    <div class="chat-header">
+      <div class="h2">ChatGPT</div>
+    </div>
+    <div class="chat-body" id="transcriptions">
+      <!-- Transcriptions will be appended here -->
+    </div>
+    <div class="chat-footer">
+      <input id="textInput" placeholder="Type your message" type="text">
+      <button id="sendButton">Send</button>
+    </div>
+  </div>
+  <button id="startButton">Start Session</button>
+  <button id="stopButton" style="display: none;">Stop Session</button>
+  <script src="script.js"></script>
+</body>
+</html>
