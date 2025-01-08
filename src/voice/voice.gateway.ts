@@ -57,16 +57,15 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     ws.on('message', async (message) => {
       const serverEvent = JSON.parse(message.toString());
-      console.log(serverEvent);
+      console.log('Received event from server:', serverEvent);
 
       switch (serverEvent.type) {
-        case 'text':
-          const textResponse = await this.openAIService.generateResponse(serverEvent.text);
-          this.sendMessage(client, textResponse);
-          break;
         case 'audio':
           // Handle audio event
           // Convert audio to text, send to OpenAI, and handle response
+          console.log('Received audio event:', serverEvent.audio); // Log received audio event
+          const audioResponse = await this.openAIService.generateResponse(serverEvent.audio);
+          this.sendMessage(client, audioResponse);
           break;
         case 'function_call':
           // Handle function call event
@@ -84,7 +83,7 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const event = {
       type: 'response.create',
       response: {
-        modalities: ['audio', 'text'],
+        modalities: ['audio'],
         instructions: instructions || 'Respond mostly in English. Never speak French or Spanish.',
       },
       turn_detection: {

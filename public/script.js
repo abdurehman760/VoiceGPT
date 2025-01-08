@@ -1,9 +1,13 @@
 let pc; // Declare the peer connection globally
 let dc; // Declare the data channel globally
 let isSessionActive = false; // Track the session state
+let isAudioEnabled = true; // Initially unmuted
+let recognition; // Speech recognition instance
+let localStream; // Store the local media stream
 
 async function init() {
   console.log("Initializing WebRTC session...");
+  document.getElementById("loading").style.display = "flex"; // Show loader
 
   // Request the Ephemeral Key
   try {
@@ -21,8 +25,9 @@ async function init() {
     console.log("WebRTC Peer Connection created.");
 
     // Handle Audio Streams
-    const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
-    pc.addTrack(ms.getTracks()[0]);
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const audioTrack = localStream.getTracks()[0];
+    pc.addTrack(audioTrack);
     console.log("User media stream added to Peer Connection.");
 
     const audioEl = document.getElementById("audioOutput");
@@ -50,12 +55,13 @@ async function init() {
       // Handle conversation item created event
       if (realtimeEvent.type === 'conversation.item.created') {
         const item = realtimeEvent.item;
-        if (typeof item.content === 'string' && item.content.trim()) {
-          const itemEl = document.createElement('div');
-          itemEl.classList.add('message', 'incoming');
-          itemEl.innerHTML = `<p>${item.content}</p>`;
-          document.getElementById("transcriptions").appendChild(itemEl);
-          console.log("Displayed conversation item created:", item);
+        if (item.content && item.content.length > 0 && item.content[0].transcript) {
+          const transcript = item.content[0].transcript;
+          const transcriptEl = document.createElement('div');
+          transcriptEl.classList.add('message', 'outgoing');
+          transcriptEl.innerHTML = `<p>User: ${transcript}</p>`;
+          document.getElementById("transcriptions").appendChild(transcriptEl);
+          console.log("Displayed user transcription:", transcript);
         }
       }
 
@@ -125,10 +131,11 @@ async function init() {
     // Wait for the data channel to open before sending the initial event
     dc.addEventListener("open", () => {
       console.log("Data channel opened.");
+      document.getElementById("loading").style.display = "none"; // Hide loader
       const responseCreate = {
         type: "response.create",
         response: {
-          modalities: ["audio", "text"],
+          modalities: ["audio"], // Enable audio chat by default
           instructions: "Talk very shortly,Provide a clear and concise response. Avoid using Spanish, ensure the answer is precise and relevant to the query",
         },
       };
@@ -136,106 +143,64 @@ async function init() {
       console.log("Initial event sent to server:", responseCreate);
     });
 
-    // Handle user speech
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const source = audioContext.createMediaStreamSource(ms);
-    const processor = audioContext.createScriptProcessor(1024, 1, 1);
-
-    source.connect(processor);
-    processor.connect(audioContext.destination);
-
-    let isSpeaking = false;
-    let speechTimeout;
-    let audioChunks = [];
-
-    processor.onaudioprocess = (event) => {
-      const input = event.inputBuffer.getChannelData(0);
-      let sum = 0.0;
-      for (let i = 0; i < input.length; ++i) {
-        sum += input[i] * input[i];
-      }
-      const rms = Math.sqrt(sum / input.length);
-      if (rms > 0.1) { // Adjust threshold as needed
-        if (!isSpeaking) {
-          console.log('User started speaking');
-          isSpeaking = true;
-          clearTimeout(speechTimeout);
-          audioChunks = [];
-        
-        }
-        audioChunks.push(...input);
-      } else {
-        if (isSpeaking) {
-          clearTimeout(speechTimeout);
-          speechTimeout = setTimeout(() => {
-            console.log('User stopped speaking');
-            isSpeaking = false;
-            document.getElementById('userContainer').classList.remove('speaking');
-            document.getElementById('circle1').style.display = 'none';
-            document.getElementById('circle2').style.display = 'none';
-            document.getElementById('circle3').style.display = 'none';
-            // Handle voice detection logic here
-            processUserSpeech(audioChunks);
-          }, 1000); // Wait for 1 second of silence before processing
-        }
-      }
-    };
+    // Start speech recognition
+    startSpeechRecognition();
 
     isSessionActive = true;
     updateButtonState();
+    document.getElementById("startPrompt").style.display = "none"; // Hide the start prompt
 
   } catch (error) {
     console.error("Error during WebRTC initialization:", error);
+    document.getElementById("loading").style.display = "none"; // Hide loader on error
   }
 }
 
-async function processUserSpeech(audioChunks) {
-  // Implement the logic to process the user's speech after they have stopped speaking
-  console.log('Processing user speech...', audioChunks);
+function startSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
 
-  // Convert audioChunks to Blob
-  const audioBlob = new Blob([new Float32Array(audioChunks)], { type: 'audio/wav' });
-
-  // Send the audioBlob to the server for transcription using Whisper
-  const formData = new FormData();
-  formData.append('file', audioBlob, 'input_audio.wav');
-  formData.append('model', 'whisper-1');
-
-  try {
-    const response = await fetch('/openai/transcribe', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to transcribe audio');
-    }
-
-    const data = await response.json();
-    const transcript = data.text;
+  recognition.onresult = (event) => {
+    const transcript = event.results[event.results.length - 1][0].transcript.trim();
+    console.log('Transcribed speech:', transcript);
 
     // Display the user's speech as text
-    const userSpeechEl = document.createElement('div');
-    userSpeechEl.classList.add('message', 'outgoing');
-    userSpeechEl.innerHTML = `<p>User: ${transcript}</p>`;
-    document.getElementById("transcriptions").appendChild(userSpeechEl);
-    console.log("Displayed user transcription:", transcript);
+    if (transcript) {
+      const userSpeechEl = document.createElement('div');
+      userSpeechEl.classList.add('message', 'outgoing');
+      userSpeechEl.innerHTML = `<p> ${transcript}</p>`;
+      document.getElementById("transcriptions").appendChild(userSpeechEl);
+      console.log("Displayed user transcription:", transcript);
 
-    // Send the transcribed text to the server
-    if (dc && dc.readyState === "open") {
-      const textEvent = {
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-          instructions: transcript,
-        },
-      };
-      dc.send(JSON.stringify(textEvent));
-      console.log("Sent transcribed text event to server:", textEvent);
+      // Send the transcribed text to the server
+      if (dc && dc.readyState === "open") {
+        const textEvent = {
+          type: "response.create",
+          response: {
+            modalities: ["audio"],
+            instructions: transcript,
+          },
+        };
+        dc.send(JSON.stringify(textEvent));
+        console.log("Sent transcribed text event to server:", textEvent);
+      }
     }
-  } catch (error) {
-    console.error("Error transcribing audio:", error);
-  }
+  };
+
+  recognition.onerror = (event) => {
+    console.error('Speech recognition error:', event.error);
+  };
+
+  recognition.onend = () => {
+    if (isSessionActive && isAudioEnabled) {
+      recognition.start(); // Restart recognition if the session is still active and audio is enabled
+    }
+  };
+
+  recognition.start();
 }
 
 function stopSession() {
@@ -244,13 +209,16 @@ function stopSession() {
     pc = null;
     console.log("WebRTC session stopped.");
   }
+  if (recognition) {
+    recognition.stop();
+  }
   isSessionActive = false;
   updateButtonState();
 }
 
 function updateButtonState() {
-  const startButton = document.getElementById("startButton");
-  const stopButton = document.getElementById("stopButton");
+  const startButton = document.querySelector(".start-button");
+  const stopButton = document.querySelector(".stop-button");
 
   if (isSessionActive) {
     startButton.style.display = "none";
@@ -261,34 +229,30 @@ function updateButtonState() {
   }
 }
 
-document.getElementById("startButton").addEventListener("click", () => {
+document.querySelector(".start-button").addEventListener("click", () => {
   init();
 });
 
-document.getElementById("stopButton").addEventListener("click", () => {
+document.querySelector(".stop-button").addEventListener("click", () => {
   stopSession();
 });
 
-document.getElementById("sendButton").addEventListener("click", () => {
-  const textInput = document.getElementById("textInput").value;
-  if (textInput && dc && dc.readyState === "open") {
-    const textEvent = {
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions: textInput,
-      },
-    };
-    dc.send(JSON.stringify(textEvent));
-    console.log("Sent text event to server:", textEvent);
-
-    // Display the user's text input
-    const userTextEl = document.createElement('div');
-    userTextEl.classList.add('message', 'outgoing');
-    userTextEl.innerHTML = `<p>User: ${textInput}</p>`;
-    document.getElementById("transcriptions").appendChild(userTextEl);
-    document.getElementById("textInput").value = ""; // Clear the input field
+document.getElementById("micIcon").addEventListener("click", () => {
+  isAudioEnabled = !isAudioEnabled;
+  const audioTrack = localStream.getTracks()[0];
+  const micIcon = document.getElementById("micIcon");
+  const micStatus = document.getElementById("micStatus");
+  if (isAudioEnabled) {
+    audioTrack.enabled = true;
+    recognition.start();
+    micIcon.src = "microphone.png";
+    micStatus.textContent = "Listening";
+    console.log("Microphone unmuted.");
+  } else {
+    audioTrack.enabled = false;
+    recognition.stop();
+    micIcon.src = "mute.png";
+    micStatus.textContent = "Muted";
+    console.log("Microphone muted.");
   }
 });
-
-updateButtonState(); // Initialize button state on page load

@@ -117,6 +117,7 @@ export class OpenAIService {
   }
 
   async transcribeAudio(file: Express.Multer.File): Promise<string> {
+    console.log('Received audio file for transcription:', file.originalname); // Log received audio file
     const url = 'https://api.openai.com/v1/audio/transcriptions';
     const headers = {
       Authorization: `Bearer ${this.apiKey}`,
@@ -133,6 +134,7 @@ export class OpenAIService {
           Authorization: `Bearer ${this.apiKey}`,
         },
       });
+      console.log('Transcription result:', response.data.text); // Log transcription result
       return response.data.text;
     } catch (error) {
       console.error('Error transcribing audio:', error);

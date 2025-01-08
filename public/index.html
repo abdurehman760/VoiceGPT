@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Voice GPT Frontend</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,17 +13,27 @@
   <div class="chat-card">
     <div class="chat-header">
       <div class="h2">ChatGPT</div>
+      <button class="start-button" id="startButton">Start Session</button>
+      <button class="stop-button" id="stopButton" style="display: none;">Stop Session</button>
     </div>
     <div class="chat-body" id="transcriptions">
+      <div id="startPrompt" class="message incoming">
+        <p>Please click on the "Start Session" button to begin.</p>
+      </div>
       <!-- Transcriptions will be appended here -->
+      <div class="loading" id="loading" style="display: none;">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
     </div>
     <div class="chat-footer">
-      <input id="textInput" placeholder="Type your message" type="text">
-      <button id="sendButton">Send</button>
+      <img src="microphone.png" alt="Mic Icon" class="mic-icon" id="micIcon">
+      <span id="micStatus">Click to Mute</span>
     </div>
   </div>
-  <button id="startButton">Start Session</button>
-  <button id="stopButton" style="display: none;">Stop Session</button>
   <script src="script.js"></script>
 </body>
 </html>

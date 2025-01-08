@@ -1,55 +1,106 @@
 body {
   font-family: 'Orbitron', sans-serif;
   background-color: #0d0d0d;
-  color: #00ff00;
   margin: 0;
   padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: center; /* Center items horizontally */
+  justify-content: center; /* Center items vertically */
+  height: 100vh;
+  
 }
 
 /* Remove switch button styles */
+
+/* From Uiverse.io by mrhyddenn */
+.start-button, .stop-button {
+  background-color: #1197cc;
+  box-shadow: #094c66 4px 4px 0px;
+  border-radius: 8px;
+  padding: 15px 10px;
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  font-size: 15px;
+  text-transform: uppercase;
+  min-width: 120px;
+  transition: transform 200ms, box-shadow 200ms;
+  margin: 10px; /* Add margin for spacing */
+}
+
+.start-button:active, .stop-button:active {
+  transform: translateY(4px) translateX(4px);
+  box-shadow: #094c66 0px 0px 0px;
+}
+
+.start-button {
+  background-color: #28a745; /* Green color for start button */
+}
+
+.stop-button {
+  background-color: #dc3545; /* Red color for stop button */
+}
+
+.mic-icon {
+  width: 24px;
+  height: 24px;
+  margin-left: 10px;
+  cursor: pointer;
+}
 
 #audioOutput {
   margin-top: 20px;
 }
 
 .chat-card {
-  width: 300px;
+  width: 80%;
+  max-width: 800px;
   background-color: #fff;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 80%;
 }
 
 .chat-header {
-  padding: 10px;
+  padding: 20px;
   background-color: #f2f2f2;
   display: flex;
   align-items: center;
+  justify-content: space-between; /* Adjust alignment */
 }
 
 .chat-header .h2 {
-  font-size: 16px;
+  font-size: 24px;
   color: #333;
 }
 
 .chat-body {
+  flex-grow: 1;
   padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative; /* Add relative positioning */
 }
 
 .message {
   margin-bottom: 10px;
   padding: 10px;
-  border-radius: 5px;
-  max-width: 80%;
+  max-width: 60%;
+  font-family: 'Roboto', sans-serif; /* Update font for chat messages */
+  position: relative;
 }
 
 .incoming {
   background-color: #e1e1e1;
   align-self: flex-start;
   color: #000;
+  margin-left: 0; /* Align incoming messages to the left */
+  border-radius: 10px 10px 10px 0; /* Rounded edges with one sharp edge */
 }
 
 .outgoing {
@@ -57,39 +108,20 @@ body {
   align-self: flex-end;
   color: #fff;
   text-align: right;
+  margin-right: 0; /* Align outgoing messages to the right */
+  border-radius: 10px 10px 0 10px; /* Rounded edges with one sharp edge */
 }
 
 .message p {
   font-size: 14px;
-  color: #333;
   margin: 0;
 }
 
 .chat-footer {
-  padding: 10px;
+  padding: 20px;
   background-color: #f2f2f2;
   display: flex;
-}
-
-.chat-footer input[type="text"] {
-  flex-grow: 1;
-  padding: 5px;
-  border: none;
-  border-radius: 3px;
-}
-
-.chat-footer button {
-  padding: 5px 10px;
-  border: none;
-  background-color: #4285f4;
-  color: #fff;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.chat-footer button:hover {
-  background-color: #0f9d58;
+  align-items: center;
 }
 
 @keyframes chatAnimation {
@@ -116,6 +148,64 @@ body {
 
 .chat-card .message:nth-child(odd) {
   animation-delay: 0.3s;
+}
+
+/* Loader styles */
+.loading {
+  --speed-of-animation: 0.9s;
+  --gap: 12px; /* Double the gap */
+  --first-color: #4c86f9;
+  --second-color: #49a84c;
+  --third-color: #f6bb02;
+  --fourth-color: #f6bb02;
+  --fifth-color: #2196f3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 200px; /* Double the width */
+  gap: var(--gap);
+  height: 200px; /* Double the height */
+  position: absolute; /* Center the loader */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.loading span {
+  width: 8px; /* Double the width */
+  height: 100px; /* Double the height */
+  background: var(--first-color);
+  animation: scale var(--speed-of-animation) ease-in-out infinite;
+}
+
+.loading span:nth-child(2) {
+  background: var(--second-color);
+  animation-delay: -0.8s;
+}
+
+.loading span:nth-child(3) {
+  background: var(--third-color);
+  animation-delay: -0.7s;
+}
+
+.loading span:nth-child(4) {
+  background: var(--fourth-color);
+  animation-delay: -0.6s;
+}
+
+.loading span:nth-child(5) {
+  background: var(--fifth-color);
+  animation-delay: -0.5s;
+}
+
+@keyframes scale {
+  0%, 40%, 100% {
+    transform: scaleY(0.05);
+  }
+
+  20% {
+    transform: scaleY(1);
+  }
 }
 
 
