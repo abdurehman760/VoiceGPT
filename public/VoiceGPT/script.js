@@ -245,13 +245,13 @@ document.getElementById("micIcon").addEventListener("click", () => {
   if (isAudioEnabled) {
     audioTrack.enabled = true;
     recognition.start();
-    micIcon.src = "microphone.png";
+    micIcon.src = "VoiceGPT/icons/microphone.png";
     micStatus.textContent = "Listening";
     console.log("Microphone unmuted.");
   } else {
     audioTrack.enabled = false;
     recognition.stop();
-    micIcon.src = "mute.png";
+    micIcon.src = "VoiceGPT/icons/mute.png";
     micStatus.textContent = "Muted";
     console.log("Microphone muted.");
   }

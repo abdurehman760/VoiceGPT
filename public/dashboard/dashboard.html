@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Train Page</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Upload Document for Training</h1>
+    <form id="uploadForm">
+      <input type="file" id="fileInput" name="file" accept=".pdf,.docx" required>
+      <button type="submit">Upload</button>
+    </form>
+    <div id="status"></div>
+    <div id="metadata"></div>
+  </div>
+
+  <script>
+    document.getElementById('uploadForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('Please select a file to upload.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const statusEl = document.getElementById('status');
+      const metadataEl = document.getElementById('metadata');
+      statusEl.innerText = 'Uploading...';
+      metadataEl.innerHTML = '';
+
+      try {
+        const response = await fetch('/train/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload file');
+        }
+
+        statusEl.innerText = 'Processing...';
+        const result = await response.json();
+        statusEl.innerText = 'Embedding Created Successfully!';
+        metadataEl.innerHTML = `
+          <p><strong>Document Title:</strong> ${file.name}</p>
+          <p><strong>Embedding Creation Time:</strong> ${new Date().toLocaleString()}</p>
+        `;
+        console.log('Upload result:', result);
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        statusEl.innerText = 'Error uploading file.';
+      }
+    });
+  </script>
+</body>
+</html>

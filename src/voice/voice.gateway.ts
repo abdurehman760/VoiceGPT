@@ -83,14 +83,14 @@ export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const event = {
       type: 'response.create',
       response: {
-        modalities: ['audio'],
+        modalities: ['audio','text'],
         instructions: instructions || 'Respond mostly in English. Never speak French or Spanish.',
       },
       turn_detection: {
         type: 'server_vad',
         threshold: 10, // Adjust this to detect louder voices
         prefix_padding_ms: 300, // Buffer before the detected speech
-        silence_duration_ms: 500, // Silence duration to consider the turn ended
+        silence_duration_ms: 1000, // Silence duration to consider the turn ended
         create_response: true,
       },
     };
